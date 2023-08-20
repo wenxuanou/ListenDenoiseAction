@@ -26,8 +26,8 @@ def sample_mixmodels(models, batches, guidance_factors):
                 
     beta = np.array(noise_sched_0)
 
-    talpha = 1 - beta
-    talpha_cum = np.cumprod(talpha)
+    # talpha = 1 - beta
+    # talpha_cum = np.cumprod(talpha)
 
     alpha = 1 - beta
     alpha_cum = np.cumprod(alpha)
@@ -36,8 +36,8 @@ def sample_mixmodels(models, batches, guidance_factors):
     ctrl, global_cond, _ = batches[-1]
     poses = torch.randn(ctrl.shape[0], ctrl.shape[1], models[0].pose_dim, device=models[0].device)
                
-    nbatch = poses.size(0)
-    noise_scale = torch.from_numpy(alpha_cum**0.5).type_as(poses).unsqueeze(1)
+    # nbatch = poses.size(0)
+    # noise_scale = torch.from_numpy(alpha_cum**0.5).type_as(poses).unsqueeze(1)
 
     for n in range(len(alpha) - 1, -1, -1):
         c1 = 1 / alpha[n]**0.5
@@ -68,7 +68,7 @@ def sample_mixmodels(models, batches, guidance_factors):
         anim_clip = out_poses.cpu().detach().numpy()
     return anim_clip
 
-def do_synthesize(models, l_conds, g_conds, file_name, postfix, trim, dest_dir, guidance_factors, gpu, render_video, outfile):
+def do_synthesize(models, l_conds, g_conds, trim, dest_dir, guidance_factors, gpu, render_video, outfile):
     nframes = l_conds[-1].size(1)
     
     device = torch.device(gpu)
@@ -92,10 +92,12 @@ def nans2zeros(x):
     
 def get_style_vector(styles_file, style_token, nbatch, nframes):
     all_styles = np.loadtxt(styles_file, dtype=str)    
-    styles_onehot = styles2onehot(all_styles, style_token)
-    styles = styles_onehot.repeat(nbatch, nframes,1)    
+    styles_onehot = torch.from_numpy(styles2onehot(all_styles, style_token)).float()
+    styles = styles_onehot.repeat(nbatch, nframes,1)
 
-def get_cond(model, data_dir, input_file, style_token, length):
+    return styles
+
+def get_cond(model, data_dir, input_file, style_token, endframe):
     # Load input features
     with open(join(data_dir, input_file), 'rb') as f:
         ctrl = pkl.load(f)
@@ -112,13 +114,10 @@ def get_cond(model, data_dir, input_file, style_token, length):
     
     # parse styles
     styles=[]
-    if "styles_file" in model.hparams.Data:   
+    if "styles_file" in model.hparams.Data:
         styles_file = os.path.join(data_dir, model.hparams.Data["styles_file"])
-        all_styles = np.loadtxt(styles_file, dtype=str)
-        
-        styles_onehot = torch.from_numpy(styles2onehot(all_styles, style_token)).float()
-        styles = styles_onehot.repeat(nbatch, nframes,1)    
-        
+        styles = get_style_vector(styles_file, style_token, nbatch, nframes)
+
     return model.standardizeInput(ctrl), styles
 
 def arg2tokens(arg, delim=","):
@@ -174,8 +173,6 @@ if __name__ == "__main__":
             trim = int(arg)
         elif opt in ("-r", "--seed"):
             seed = int(arg)
-        elif opt in ("-p", "--postfix"):
-            postfix = arg
         elif opt in ("-l", "--dest_dir"):
             dest_dir = arg
         elif opt in ("-k", "--gpu"):
@@ -185,7 +182,6 @@ if __name__ == "__main__":
         elif opt in ("-o", "--outfile"):
             outfile = arg 
 
-    out_file_name = os.path.basename(input_files[0]).split('.')[0]
     seed_everything(seed)
     models = []
     l_conds = []
@@ -200,4 +196,4 @@ if __name__ == "__main__":
         l_conds.append(l_cond)
         g_conds.append(style)
     
-    do_synthesize(models, l_conds, g_conds, out_file_name, postfix, trim, dest_dir, guidance_factors, gpu, render_video, outfile)
+    do_synthesize(models, l_conds, g_conds, trim, dest_dir, guidance_factors, gpu, render_video, outfile)
