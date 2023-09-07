@@ -1,22 +1,27 @@
-import os
-import sys
-
 import pickle as pkl
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
 
 if __name__ == "__main__":
-    audio_pickle_name = "./data/motorica_dance/kthstreet_gKR_sFM_cAll_d01_mKR_ch01_chargedcableupyour_001_01.audio29_30fps.pkl"
-    expmap_pickle_name = "./data/motorica_dance/kthstreet_gKR_sFM_cAll_d01_mKR_ch01_chargedcableupyour_001_01.expmap_30fps.pkl"
+    # audio_pickle_name = "./data/motorica_dance/kthstreet_gKR_sFM_cAll_d01_mKR_ch01_chargedcableupyour_001_01.audio29_30fps.pkl"
+    audio_pickle_name = "./data/motorica_dance/owen_gJZ_sFM_cAll_d01_mKR_ch01_chargedcableupyour_001_00.audio29_30fps.pkl"
+    # expmap_pickle_name = "./data/motorica_dance/kthstreet_gKR_sFM_cAll_d01_mKR_ch01_chargedcableupyour_001_01.expmap_30fps.pkl"
 
-    with open(audio_pickle_name, 'rb') as f:
-        audio_pickle = pkl.load(f)
+    unpacked_audio = pd.read_pickle(audio_pickle_name)
+    beats = unpacked_audio['Beat_0'].to_numpy()
+    beats_activation = unpacked_audio['Beatactivation_0'].to_numpy()
 
-    with open(expmap_pickle_name, 'rb') as f:
-        expmap_pickle = pkl.load(f)
+    # Chroma_0
+    # MFCC_0
+    # Spectralflux_0
 
-    print("audio pickle: ")
-    print(vars(audio_pickle))
+    # print(unpacked_audio)
+    print(beats.shape)
 
-    print("expmap pickle: ")
-    print(vars(expmap_pickle))
+    beats_id = np.argwhere(beats == 1)
+    print(beats_id.shape)
 
-    print("done")
+    plt.plot(beats)
+    plt.plot(beats_activation)
+    plt.show()
