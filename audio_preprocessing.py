@@ -32,10 +32,18 @@ def generate_output_name(save_dir: str, author: str, audio_name: str, dance_styl
 
 
 if __name__ == "__main__":
-    audio_name = "data/motorica_dance/kthstreet_gKR_sFM_cAll_d01_mKR_ch01_chargedcableupyour_001.wav"
+    # audio_name = "data/motorica_dance/kthstreet_gKR_sFM_cAll_d01_mKR_ch01_chargedcableupyour_001.wav"
+    audio_name = "data/motorica_dance/owen_HustleandBustleofOrmos.wav"
+
+    output_name = generate_output_name("data/motorica_dance", "owen", "HustleandBustleofOrmos", "Tapping")
+    print("output file name: ", output_name)
 
     # read in file
-    audio = madmom.audio.signal.Signal(audio_name)
+    audio = madmom.audio.signal.SignalProcessor(num_channels=1).process(audio_name)
+    # audio = madmom.audio.signal.Signal(audio_name)
+    # TODO: extract single channel
+    if len(audio.shape) > 1:
+        audio = audio[:, 1]
     print("loaded audio file, shape: ", audio.shape)
     print("signal sample rate: ", audio.sample_rate)
 
@@ -47,6 +55,7 @@ if __name__ == "__main__":
     # get RNN down beat activation
     downbeat_activation = madmom.features.RNNDownBeatProcessor(fps=30)(audio)
     # beats_pred = madmom.features.DBNDownBeatTrackingProcessor([1], fps=30)(downbeat_activation)
+    downbeat_activation = downbeat_activation[0:sample_num_30fps, 1]    # make sure align
     print("get beat activations, shape: ", downbeat_activation.shape)
 
     beats_activation = madmom.features.RNNBeatProcessor(fps=30)(audio)
@@ -56,6 +65,8 @@ if __name__ == "__main__":
     beats = np.arange(sample_num_30fps)
     for i in range(sample_num_30fps):
         beats[i] = (beats[i] / 30.0) in beats_pred
+    beats = beats[0:sample_num_30fps]                            # make sure align
+    print("get beats, shape: ", beats.shape)
 
     # plt.figure(1)
     # plt.plot(downbeat_activation[:, 0])
@@ -76,10 +87,12 @@ if __name__ == "__main__":
 
     # get spectral flux
     sf = madmom.features.onsets.spectral_flux(spec)
+    sf = sf[0:sample_num_30fps]                            # make sure align
     print("get spectral flux, shape: ", sf.shape)
 
     # get MFCC
     mfcc = MFCC(spec, num_bands=20)
+    mfcc = mfcc[0:sample_num_30fps, :]                            # make sure align
     print("get MFCC, shape: ", mfcc.shape)
 
 
@@ -90,7 +103,7 @@ if __name__ == "__main__":
     # building dataframe
     series_dict = {}
     series_dict["Beat_0"] = pd.Series(beats, index=time_index)
-    series_dict["Beatactivation_0"] = pd.Series(downbeat_activation[:, 1], index=time_index)
+    series_dict["Beatactivation_0"] = pd.Series(downbeat_activation, index=time_index)
     series_dict["Spectralflux_0"] = pd.Series(sf, index=time_index)
 
     for i in range(chroma.shape[1]):     # should be 6 in official dataset, here use all
@@ -100,8 +113,4 @@ if __name__ == "__main__":
         series_dict[f"MFCC_{i}"] = pd.Series(mfcc[:, i], index=time_index)
 
     df = pd.DataFrame.from_dict(series_dict)
-    # print("get dataframe")
-
-    output_name = generate_output_name("data/motorica_dance", "owen", "chargedcableupyour", "Jazz")
-    print("output file name: ", output_name)
     df.to_pickle(output_name)
