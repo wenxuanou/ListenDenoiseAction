@@ -33,17 +33,21 @@ def generate_output_name(save_dir: str, author: str, audio_name: str, dance_styl
 
 if __name__ == "__main__":
     # audio_name = "data/motorica_dance/kthstreet_gKR_sFM_cAll_d01_mKR_ch01_chargedcableupyour_001.wav"
-    audio_name = "data/motorica_dance/owen_HustleandBustleofOrmos.wav"
+    # audio_name = "data/motorica_dance/owen_HustleandBustleofOrmos.wav"
+    # audio_name = "data/my_music/owen_JoltsintheForest.wav"
+    # audio_name = "data/my_music/owen_RhymesofVales.wav"
+    audio_name = "data/my_music/ParovStelar_BootySwing.wav"
 
-    output_name = generate_output_name("data/motorica_dance", "owen", "HustleandBustleofOrmos", "Tapping")
+
+    # output_name = generate_output_name("data/motorica_dance", "owen", "HustleandBustleofOrmos", "Tapping")
+    # output_name = generate_output_name("data/my_music", "owen", "JoltsintheForest", "Tapping")
+    # output_name = generate_output_name("data/my_music", "owen", "RhymesofVales", "Tapping")
+    output_name = generate_output_name("data/my_music", "ParovStelar", "BootySwing", "Charleston")
+
     print("output file name: ", output_name)
 
     # read in file
     audio = madmom.audio.signal.SignalProcessor(num_channels=1).process(audio_name)
-    # audio = madmom.audio.signal.Signal(audio_name)
-    # TODO: extract single channel
-    if len(audio.shape) > 1:
-        audio = audio[:, 1]
     print("loaded audio file, shape: ", audio.shape)
     print("signal sample rate: ", audio.sample_rate)
 

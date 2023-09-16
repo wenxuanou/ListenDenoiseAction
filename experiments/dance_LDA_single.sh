@@ -7,15 +7,16 @@ if [ ! -d "${dest_dir}" ]; then
     mkdir -p "${dest_dir}"
 fi
 
-data_dir=data/motorica_dance
-wav_dir=data/motorica_dance
+data_dir=data/my_music      # data/motorica_dance
+wav_dir=data/my_music       # data/motorica_dance
 basenames=$(cat "${data_dir}/gen_files.txt")
 
-start=0
-seed=150
+start_s=30
+seed=50                    # 150
 fps=30
 trim_s=0
-length_s=10                 # length in seconds
+length_s=70                 # length in seconds
+start=$((start_s*fps))
 trim=$((trim_s*fps))
 length=$((length_s*fps))    # number of samples
 fixed_seed=false
@@ -24,7 +25,6 @@ render_video=true
 
 for wavfile in $basenames; 
 do
-	start=0
 	style=$(echo $wavfile | awk -F "_" '{print $2}') #Coherent style parsed from file-name
 	postfix="single"
 
